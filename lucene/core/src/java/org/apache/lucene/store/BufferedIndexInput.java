@@ -29,19 +29,22 @@ public abstract class BufferedIndexInput extends IndexInput implements RandomAcc
   ;
 
   /** Default buffer size set to {@value #BUFFER_SIZE}. */
-  public static final int BUFFER_SIZE = 1024;
+  public static final int BUFFER_SIZE = 4096;
 
   /** Minimum buffer size allowed */
   public static final int MIN_BUFFER_SIZE = 8;
 
-  // The normal read buffer size defaults to 1024, but
+  // The normal read buffer size is smaller, but
   // increasing this during merging seems to yield
-  // performance gains.  However we don't want to increase
+  // performance gains. However we don't want to increase
   // it too much because there are quite a few
-  // BufferedIndexInputs created during merging.  See
-  // LUCENE-888 for details.
+  // BufferedIndexInputs created during merging.
+  // It is worth noting that the buffer is allocated lazily
+  // when needed, and in some cases it is not allocated at
+  // all (e.g. if readBytes is called with a destination
+  // buffer larger than the bufferSize in use).
   /** A buffer size for merges set to {@value #MERGE_BUFFER_SIZE}. */
-  public static final int MERGE_BUFFER_SIZE = 4096;
+  public static final int MERGE_BUFFER_SIZE = 65536;
 
   private int bufferSize = BUFFER_SIZE;
 
