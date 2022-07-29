@@ -91,9 +91,6 @@ public class NIOFSDirectory extends FSDirectory {
 
   /** Reads bytes with {@link FileChannel#read(ByteBuffer, long)} */
   static final class NIOFSIndexInput extends BufferedIndexInput {
-    /** The maximum chunk size for reads of 16384 bytes. */
-    private static final int CHUNK_SIZE = 16384;
-
     /** the file channel we will read from */
     protected final FileChannel channel;
     /** is this instance a clone and hence does not own the file to close it */
@@ -171,21 +168,15 @@ public class NIOFSDirectory extends FSDirectory {
       }
 
       try {
-        int readLength = b.remaining();
-        while (readLength > 0) {
-          final int toRead = Math.min(CHUNK_SIZE, readLength);
-          b.limit(b.position() + toRead);
-          assert b.remaining() == toRead;
+        while (b.remaining() > 0) {
           final int i = channel.read(b, pos);
           if (i < 0) {
-            // be defensive here, even though we checked before hand, something could have changed
+            // be defensive here, even though we checked beforehand, something could have changed
             throw new EOFException(
                 "read past EOF: "
                     + this
                     + " buffer: "
                     + b
-                    + " chunkLen: "
-                    + toRead
                     + " end: "
                     + end);
           }
@@ -193,9 +184,8 @@ public class NIOFSDirectory extends FSDirectory {
               : "FileChannel.read with non zero-length bb.remaining() must always read at least "
                   + "one byte (FileChannel is in blocking mode, see spec of ReadableByteChannel)";
           pos += i;
-          readLength -= i;
         }
-        assert readLength == 0;
+        assert b.remaining() == 0;
       } catch (IOException ioe) {
         throw new IOException(ioe.getMessage() + ": " + this, ioe);
       }
